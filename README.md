@@ -1,29 +1,29 @@
 # flash-attention-rdna2
 
 Exact FlashAttention for **AMD RDNA2** (gfx1030 / RX 6800 XT), written in HIP.
-Drop-in for `flash_attn`: install it and unmodified CUDA-oriented code just runs.
+Provides the `flash_attn` module: code written against the CUDA build runs unmodified.
 
 The upstream [flash-attention](https://github.com/Dao-AILab/flash-attention) does not support
 RDNA2 — no matrix cores, no `cp.async`, a different LDS budget. These kernels are written for
 that hardware from scratch, on `v_dot2_f32_f16`.
 
-**Exact, not approximate.** No int8/FP8 quantisation anywhere on the default path. The output
-matches an fp64 CPU oracle to the fp16 rounding floor (`rel_rms ≈ 2.4e-4`), which is the whole
-point of FlashAttention: you can drop it into any model without re-validating quality.
+The kernels are exact. There is no int8/FP8 quantisation on the default path; output matches an
+fp64 CPU oracle to the fp16 rounding floor (`rel_rms ≈ 2.4e-4`), so results are equivalent to a
+standard attention implementation in the same dtype.
 
-> Source comments and design notes are in Russian; the API and this file are in English.
+Source comments and design notes are in Russian; the API and this file are in English.
 
-## What it gives you
+## Usage
 
 ```python
 import torch
-from flash_attn import flash_attn_func          # ← unmodified consumer code
+from flash_attn import flash_attn_func
 
 q = torch.randn(1, 8192, 32, 128, device="cuda", dtype=torch.float16)
 out = flash_attn_func(q, q, q, causal=True)     # (batch, seqlen, nheads, headdim)
 ```
 
-Stock `transformers` works with no changes at all:
+Integration with `transformers`:
 
 ```python
 model = AutoModelForCausalLM.from_pretrained(..., attn_implementation="flash_attention_2")
@@ -32,9 +32,9 @@ model = AutoModelForCausalLM.from_pretrained(..., attn_implementation="flash_att
 ## Measured on RX 6800 XT
 
 End-to-end through the public Python API (not a synthetic kernel loop), fp16.
-The card's raw `v_dot2` issue rate is **36 TFLOP/s** — that is the real ceiling, measured with
-a shader-clock counter, not the 41.5 from the spec sheet (that number assumes a boost clock the
-card does not hold under fp16 load).
+The card's raw `v_dot2` issue rate is **36 TFLOP/s**, measured with a shader-clock counter. The
+41.5 TFLOP/s figure from the spec sheet assumes a boost clock the card does not sustain under
+fp16 load and is not used as a reference here.
 
 | path | shape | measured |
 |---|---|---|
@@ -45,7 +45,7 @@ card does not hold under fp16 load).
 | backward, causal | S=4096 | 3.85 TFLOP/s |
 | sliding window | S=8192, window=512 | 5.6 ms (tiles outside the window are skipped) |
 
-Peak VRAM for a forward at S=8192, H=32, D=128 is **0.27 GB** — the S×S score matrix is never
+Peak VRAM for a forward at S=8192, H=32, D=128 is **0.27 GB**; the S×S score matrix is never
 materialised.
 
 ## API coverage
@@ -64,17 +64,16 @@ Supported: causal, sliding window `(left, right)` including two-sided, GQA/MQA, 
 `alibi`, dropout with a deterministic Philox mask, varlen with `cu_seqlens` and `seqused_*`,
 paged KV cache, rotary (NeoX and interleaved, partial `rotary_dim`), `attention_chunk`,
 `qv`, `cache_leftpad`, `cache_batch_idx`, `return_softmax_lse`, `return_attn_probs`,
-multi-token decode (speculative decoding / chunked prefill), head_dim up to 256 (any value —
-non-instantiated sizes are zero-padded, as upstream does), fp16 / bf16, and fp32 as a bonus
-that upstream does not have.
+multi-token decode (speculative decoding / chunked prefill), head_dim up to 256 (any value;
+sizes without a dedicated instantiation are zero-padded, as upstream does), fp16 and bf16.
+fp32 is also supported, which upstream does not provide.
 
-**Deliberately not supported:** FP8 descales (`q_descale` / `k_descale` / `v_descale`). RDNA2 has
-no tensor cores, so FP8 buys no speed and only costs accuracy — and an inexact kernel is not
-FlashAttention. The arguments are accepted and rejected with a clear message rather than
-silently ignored.
+Not supported: FP8 descales (`q_descale` / `k_descale` / `v_descale`). RDNA2 has no tensor cores,
+so FP8 yields no throughput gain while reducing accuracy. The arguments are accepted and
+rejected with an explicit error rather than ignored.
 
-`deterministic=True` costs nothing here: the backward has no atomics by construction, so every
-run is bit-for-bit reproducible either way.
+`deterministic=True` has no cost: the backward pass uses no atomics, so results are bit-for-bit
+reproducible regardless of the flag.
 
 ## Requirements
 
@@ -94,15 +93,15 @@ This installs two distributions:
 | | |
 |---|---|
 | `fable_attn` | the engine: HIP kernels, dispatcher, tests |
-| `flash_attn` | zero lines of logic — only upstream's names, pointing at `fable_attn` |
+| `flash_attn` | no logic; upstream's names resolving to `fable_attn` |
 
-The second one exists because real consumers ask for the **distribution**, not the module:
-`transformers` calls `importlib.metadata.version("flash_attn")` and a module-level `__version__`
-does not satisfy it. Use `-NoCompat` to install the engine alone.
+The second distribution is required because consumers query package metadata rather than the
+module: `transformers` calls `importlib.metadata.version("flash_attn")`, which a module-level
+`__version__` does not satisfy. `-NoCompat` installs the engine alone.
 
 ## Tests
 
-Correctness is checked against an **fp64 CPU oracle**, not against another GPU implementation:
+Correctness is checked against an fp64 CPU oracle rather than another GPU implementation:
 
 ```powershell
 kernels\build.ps1                  # builds and runs the kernel gates
@@ -116,18 +115,20 @@ python package\tests\run_checks.py # API parity gates
 - `lab/` also holds the measurement harnesses: `bench_e2e.py`, `sweep_strides.py`, `kstats.py`
   (register/LDS/spill counts straight from the ISA).
 
-## Design notes
+## Implementation notes
 
-`PLAN.md` is the working log: what was tried, what was measured, and what was rejected **by
-measurement** rather than by argument. Some findings that cost real time to learn:
+`PLAN.md` is the working log: approaches tried, measurements taken, and options rejected on the
+basis of measurement. Selected results:
 
-- On RDNA2 a register double-buffer for the KV tile — the standard NVIDIA trick — is poison:
-  32 extra VGPRs blow up the register file and cost **3×**. LDS barriers are cheaper.
-- LDS bank conflicts were worth **58%**, and not one of them was visible by reading the code.
-  They only show up if you compute the bank for every access explicitly, or sweep configurations.
-- The largest remaining win was not in the kernel at all: the Python wrapper copied q, k and v
-  on every call (9–30% of wall time). Removing those copies gave **+35%** on some shapes and cut
-  peak VRAM by 43%. Measure the whole path the caller takes, not just the kernel.
+- A register double-buffer for the KV tile, standard practice on NVIDIA hardware, is
+  counterproductive on RDNA2: the 32 additional VGPRs exhaust the register file and cost **3×**.
+  LDS barriers are cheaper.
+- LDS bank conflicts accounted for **58%** of the achievable gain. None were apparent from
+  reading the code; they were found by computing the bank index for each access and by sweeping
+  configurations.
+- The largest remaining gain was outside the kernel: the Python wrapper copied q, k and v on
+  every call, accounting for 9–30% of wall time. Removing those copies gave **+35%** on some
+  shapes and reduced peak VRAM by 43%.
 
 ## Licence
 
