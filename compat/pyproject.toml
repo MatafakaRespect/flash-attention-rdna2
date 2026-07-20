@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+# Дистрибутив НАЗЫВАЕТСЯ flash_attn намеренно, и это не присвоение чужого имени, а условие
+# работы: настоящие потребители спрашивают именно ПАКЕТ, а не модуль. transformers падает
+# прямо в _flash_attn_2_can_dispatch на importlib.metadata.version("flash_attn"), и никакой
+# __version__ внутри модуля его не спасает — это вскрылось на первом же прогоне стокового
+# transformers, синтетика такого не ловит.
+#
+# Работы здесь нет вообще: ни одной строки логики, только имена, которые ведут в fable_attn.
+# Весь движок — в соседнем дистрибутиве fable_attn, он и стоит под нашим именем.
+name = "flash_attn"
+version = "2.8.3+fable.0.2.0"
+description = "FlashAttention для gfx1030 (RX 6800 XT): имена оригинала, ядра fable_attn"
+requires-python = ">=3.9"
+dependencies = ["fable_attn"]
+
+[tool.setuptools]
+packages = ["flash_attn", "flash_attn.layers", "flash_attn.modules",
+            "flash_attn.ops", "flash_attn.ops.triton"]
+py-modules = ["flash_attn_interface"]

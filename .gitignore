@@ -1,0 +1,27 @@
+# сборочные артефакты
+build/
+dist/
+*.egg-info/
+__pycache__/
+*.py[cod]
+
+# бинарники и вывод компилятора
+*.exe
+*.pyd
+*.obj
+*.lib
+*.exp
+*.dll
+*.so
+*.hsaco
+*.elf
+*.s
+
+# логи и рабочие выхлопы
+*.log
+lab/rga_out/
+*.txt.out
+
+# кэши инструментов
+.ninja_log
+.pytest_cache/

@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "torch"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fable_attn"
+version = "0.2.0"
+description = "Точный FlashAttention на HIP-ядрах для gfx1030 (RX 6800 XT); API один-в-один с flash-attn"
+requires-python = ">=3.9"
+dependencies = ["torch"]
+
+# API один-в-один с flash-attn: те же функции с теми же аргументами и тем же результатом —
+# flash_attn_func, flash_attn_qkvpacked_func, flash_attn_kvpacked_func, flash_attn_varlen_func,
+# flash_attn_varlen_qkvpacked_func, flash_attn_varlen_kvpacked_func, flash_attn_with_kvcache,
+# flash_attn_combine, плюс bert_padding, layers.rotary, modules.mha, ops.triton.layer_norm.
+# Порядок аргументов FA-3 (у них он другой) — в fable_attn.fa3_interface.
+# Своё здесь только одно: реализация под GPU (HIP-ядра под RDNA2 вместо CUDA).
+# Версия дистрибутива берётся ОТСЮДА, а не из setup.py — их рассинхрон один раз уже дал
+# «поставилось 0.1.0» при 0.2.0 в setup.py.
