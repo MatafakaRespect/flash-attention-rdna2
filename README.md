@@ -83,7 +83,13 @@ reproducible regardless of the flag.
 
 - AMD GPU with **gfx1030** (RX 6800 / 6800 XT / 6900 XT). GPUs like the RX 6750 XT, 6600 and others are better off with setting a variable called "HSA_OVERRIDE_GFX_VERSION=" set to the value "10.3.0" to spoof them as a genuine gfx1030 card.
 
+```powershell
+# Windows
+$env:HSA_OVERRIDE_GFX_VERSION=10.3.0
+```
+
 ```bash
+# Linux
 # to set it temporairly
 export HSA_OVERRIDE_GFX_VERSION=10.3.0
 # to set it every time you open the terminal
@@ -108,12 +114,9 @@ source ./venv/bin/activate
 
 # Clone the repository
 git clone https://github.com/MatafakaRespect/flash-attn-rdna2
-cd flash-attn-rdna2/kernels
+cd flash-attn-rdna2
 
-# Run the installation
-chmod +x ./build.sh
-./build.sh
-cd ..
+# Install
 cd package
 chmod +x ./install.sh
 ./install.sh
@@ -137,6 +140,12 @@ Correctness is checked against an fp64 CPU oracle rather than another GPU implem
 ```powershell
 kernels\build.ps1                  # builds and runs the kernel gates
 python package\tests\run_checks.py # API parity gates
+```
+
+```bash
+chmod +x kernels/build.sh
+kernels/build.sh
+python package/tests/run_checks.py
 ```
 
 - `kernels/fa_forward.hip`, `kernels/backward.hip`, `kernels/fa_decode.hip` each carry a
