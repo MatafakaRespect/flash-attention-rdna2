@@ -152,11 +152,15 @@ module: `transformers` calls `importlib.metadata.version("flash_attn")`, which a
 Correctness is checked against an fp64 CPU oracle rather than another GPU implementation:
 
 ```powershell
+# Windows
+
 kernels\build.ps1                  # builds and runs the kernel gates
 python package\tests\run_checks.py # API parity gates
 ```
 
 ```bash
+# Linux
+
 chmod +x kernels/build.sh
 kernels/build.sh
 python package/tests/run_checks.py
