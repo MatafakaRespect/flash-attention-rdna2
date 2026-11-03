@@ -84,12 +84,29 @@ reproducible regardless of the flag.
 - AMD GPU with **gfx1030** (RX 6800 / 6800 XT / 6900 XT). Other architectures need a rebuild
   with the right `--offload-arch`; the kernels are not portable to NVIDIA at all.
 - ROCm with a PyTorch build for it.
-- Build scripts are PowerShell/Windows (MSVC + hipcc). The kernels themselves are plain HIP.
+- Build scripts are PowerShell/Windows (MSVC + hipcc), hipcc and g++ for Linux. The kernels themselves are plain HIP.
 
-## Install
+## Installation
 
 ```powershell
 package\install.ps1 <path to your python.exe>
+```
+
+```bash
+# Activate Python venv to install via pip
+source ./venv/bin/activate
+
+# Clone the repository
+git clone https://github.com/MatafakaRespect/flash-attn-rdna2
+cd flash-attn-rdna2/kernels
+
+# Run the installation
+chmod +x ./build.sh
+./build.sh
+cd ..
+cd package
+chmod +x ./install.sh
+./install.sh
 ```
 
 This installs two distributions:
