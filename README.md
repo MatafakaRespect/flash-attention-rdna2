@@ -86,6 +86,7 @@ reproducible regardless of the flag.
 ```powershell
 # Windows
 
+# to set it temporairly
 $env:HSA_OVERRIDE_GFX_VERSION="10.3.0"
 ```
 
@@ -109,9 +110,6 @@ source ~/.bashrc
 
 ```powershell
 # Windows
-
-# Activate venv
-.\venv\Scripts\Activate.ps1
 
 # Clone the repository
 git clone https://github.com/MatafakaRespect/flash-attn-rdna2
