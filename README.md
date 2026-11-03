@@ -3,6 +3,7 @@
 Notes:
 - The Linux installation scripts aren't available yet.
 - I needed for this to work on Linux specifically, and I used AI to do the work (only writing the equivalents of the .ps1 scripts in the repo). Rest of the work remains untouched and just as it is in the original repo.
+
 Exact FlashAttention for **AMD RDNA2** (gfx1030 / RX 6800 XT), written in HIP.
 Provides the `flash_attn` module: code written against the CUDA build runs unmodified.
 
