@@ -85,13 +85,16 @@ reproducible regardless of the flag.
 
 ```powershell
 # Windows
-$env:HSA_OVERRIDE_GFX_VERSION=10.3.0
+
+$env:HSA_OVERRIDE_GFX_VERSION="10.3.0"
 ```
 
 ```bash
 # Linux
+
 # to set it temporairly
 export HSA_OVERRIDE_GFX_VERSION=10.3.0
+
 # to set it every time you open the terminal
 echo "HSA_OVERRIDE_GFX_VERSION=10.3.0" >> ~/.bashrc
 source ~/.bashrc
@@ -105,10 +108,21 @@ source ~/.bashrc
 ## Installation
 
 ```powershell
-package\install.ps1 <path to your python.exe>
+# Windows
+
+# Activate venv
+.\venv\Scripts\Activate.ps1
+
+# Clone the repository
+git clone https://github.com/MatafakaRespect/flash-attn-rdna2
+cd flash-attn-rdna2
+
+package\install.ps1 <path to python.exe>
 ```
 
 ```bash
+# Linux
+
 # Activate Python venv to install via pip
 source ./venv/bin/activate
 
