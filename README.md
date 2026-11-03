@@ -81,7 +81,17 @@ reproducible regardless of the flag.
 
 ## Requirements
 
-- AMD GPU with **gfx1030** (RX 6800 / 6800 XT / 6900 XT). Other architectures need a rebuild
+- AMD GPU with **gfx1030** (RX 6800 / 6800 XT / 6900 XT). GPUs like the RX 6750 XT, 6600 and others are better off with setting a variable called "HSA_OVERRIDE_GFX_VERSION=" set to the value "10.3.0" to spoof them as a genuine gfx1030 card.
+
+```bash
+# to set it temporairly
+export HSA_OVERRIDE_GFX_VERSION=10.3.0
+# to set it every time you open the terminal
+echo "HSA_OVERRIDE_GFX_VERSION=10.3.0" >> ~/.bashrc
+source ~/.bashrc
+```
+
+  Other architectures need a rebuild
   with the right `--offload-arch`; the kernels are not portable to NVIDIA at all.
 - ROCm with a PyTorch build for it.
 - Build scripts are PowerShell/Windows (MSVC + hipcc), hipcc and g++ for Linux. The kernels themselves are plain HIP.
