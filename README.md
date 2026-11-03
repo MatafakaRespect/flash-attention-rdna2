@@ -112,8 +112,8 @@ source ~/.bashrc
 # Windows
 
 # Clone the repository
-git clone https://github.com/MatafakaRespect/flash-attn-rdna2
-cd flash-attn-rdna2
+git clone https://github.com/MatafakaRespect/flash-attention-rdna2
+cd flash-attention-rdna2
 
 package\install.ps1 <path to python.exe>
 ```
@@ -125,8 +125,8 @@ package\install.ps1 <path to python.exe>
 source ./venv/bin/activate
 
 # Clone the repository
-git clone https://github.com/MatafakaRespect/flash-attn-rdna2
-cd flash-attn-rdna2
+git clone https://github.com/MatafakaRespect/flash-attention-rdna2
+cd flash-attention-rdna2
 
 # Install
 cd package
